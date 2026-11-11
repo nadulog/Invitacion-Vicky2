@@ -82,6 +82,30 @@ body {
 
 /* Secciones que se ven completas (sin recortar los costados): la sección mide lo
    mismo que la imagen, así no aparecen rellenos arriba/abajo. */
+/* Fotos (portada): arriba y abajo no se estira el borde (en una foto quedan rayas);
+   se completa con degradés de los colores del propio borde de la foto (cielo arriba,
+   piso al sol abajo) y la foto se funde suave en ellos. */
+.panel--photo .panel__stage::before,
+.panel--photo .panel__stage::after { display: none; }
+.panel--photo::before,
+.panel--photo::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 50%;
+  z-index: -1;
+}
+.panel--photo::before { top: 0; background: #c9cbd1; }
+.panel--photo::after {
+  bottom: 0;
+  background: linear-gradient(90deg, #a2805a, #bf9363 17%, #bb8f61 33%, #ae845b 50%, #ae845b 62%, #937454 80%, #77624a);
+}
+.panel--photo .panel__stage > img:first-child {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 9%, #000 90%, transparent 100%);
+          mask-image: linear-gradient(to bottom, transparent 0, #000 9%, #000 90%, transparent 100%);
+}
+
 .panel--fit {
   --zoom: 1;
   --fx: .5;
