@@ -1,0 +1,456 @@
+*, *::before, *::after { box-sizing: border-box; }
+
+:root {
+  --ink: #2c5574;        /* azul de los títulos de las imágenes */
+  --ink-soft: #56738c;   /* azul grisáceo de los números */
+  --sky: #cfe0ee;
+  --paper: #f7f4ee;
+  --silver: #a9b3bd;
+  --fade-default: 6%;
+}
+
+html { background: var(--sky); -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: linear-gradient(to bottom, #dde8f1, #c9dbea);
+  color: var(--ink);
+  font-family: "Cormorant Garamond", Georgia, serif;
+}
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+.invitation, .footer {
+  --col: min(100vw, 480px);
+  width: var(--col);
+  margin: 0 auto;
+}
+.invitation { --blend: 6svh; box-shadow: 0 0 60px rgba(44, 85, 116, .18); }
+
+/* ---------- Cada sección ocupa la pantalla completa ----------
+   La pieza (2:3) se agranda hasta cubrir el alto del celular, recortando los costados
+   como máximo --zoom (lo que no se puede recortar sin perder texto se completa con la
+   misma imagen desenfocada). --fx elige de qué lado se recorta (0 = izquierda fija). */
+.panel {
+  --zoom: 1.2;
+  --fx: .5;
+  --sw: min(max(100%, calc(100svh * 2 / 3)), calc(100% * var(--zoom)));
+  position: relative;
+  height: 100vh;
+  height: max(100svh, calc(var(--col) * 1.5));
+  overflow: hidden;
+  isolation: isolate;
+  line-height: 0;
+}
+/* Relleno arriba/abajo: se estira el borde de la propia imagen (≈1%), así continúa
+   el papel o el fondo sin que aparezcan "fantasmas" de botones o textos. */
+.panel__stage::before,
+.panel__stage::after {
+  content: "";
+  position: absolute;
+  left: -12px;
+  right: -12px;
+  height: 60svh;
+  z-index: -1;
+  background-image: var(--bg);
+  background-repeat: no-repeat;
+  background-size: 100% 6000svh;
+  filter: blur(12px);
+}
+.panel__stage::before { bottom: calc(100% - 4px); background-position: center top; }
+.panel__stage::after  { top: calc(100% - 4px);    background-position: center bottom; }
+.panel__stage {
+  position: absolute;
+  top: 50%;
+  left: calc((100% - var(--sw)) * var(--fx));
+  width: var(--sw);
+  aspect-ratio: 2 / 3;
+  transform: translateY(-50%);
+  container-type: inline-size;
+}
+.panel__stage > img:first-child {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* bordes suaves contra el fondo desenfocado */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 3%, #000 97%, transparent 100%);
+          mask-image: linear-gradient(to bottom, transparent 0, #000 3%, #000 97%, transparent 100%);
+}
+
+/* Secciones que se ven completas (sin recortar los costados): la sección mide lo
+   mismo que la imagen, así no aparecen rellenos arriba/abajo. */
+.panel--fit {
+  --zoom: 1;
+  --fx: .5;
+  height: calc(var(--col) * 1.5);
+}
+.panel--fit .panel__stage > img:first-child { -webkit-mask-image: none; mask-image: none; }
+
+/* Fundido entre secciones */
+.panel + .panel {
+  margin-top: calc(var(--blend) * -1);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, rgba(0, 0, 0, .3) calc(var(--blend) * .4), rgba(0, 0, 0, .8) calc(var(--blend) * .75), #000 var(--blend));
+          mask-image: linear-gradient(to bottom, transparent 0, rgba(0, 0, 0, .3) calc(var(--blend) * .4), rgba(0, 0, 0, .8) calc(var(--blend) * .75), #000 var(--blend));
+  pointer-events: none; /* la franja superpuesta no tapa los botones de arriba */
+}
+.panel + .panel a,
+.panel + .panel button,
+.panel + .panel .scratch { pointer-events: auto; }
+
+/* Footer: se funde con "Te espero" */
+.footer { position: relative; container-type: inline-size; line-height: 0; margin-top: calc(var(--col) * -0.08); }
+.footer img { display: block; width: 100%; height: auto; }
+.footer img {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 24%);
+          mask-image: linear-gradient(to bottom, transparent 0, #000 24%);
+}
+
+/* Botones invisibles sobre la imagen */
+.hotspot {
+  position: absolute;
+  display: block;
+  color: transparent;
+  font-size: 0;
+  border-radius: 6px;
+  z-index: 3;
+  -webkit-tap-highlight-color: rgba(44, 85, 116, .18);
+}
+button.hotspot { background: transparent; border: 0; padding: 0; cursor: pointer; }
+.hotspot:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+.hotspot--calendar  { left: 7.6%;  width: 50%;   top: 71.8%; height: 4.6%; }
+.hotspot--location  { left: 7.4%;  width: 43%;   top: 48.3%; height: 5%; }
+.hotspot--bloomkeep { left: 21%;   width: 58%;   top: 91.9%; height: 5.3%; }
+.hotspot--music     { left: 24.2%; width: 41.5%; top: 30.3%; height: 4.1%; }
+.hotspot--gifts     { left: 21%;   width: 58%;   top: 89.5%; height: 6.3%; }
+.hotspot--rsvp      { left: 14.4%; width: 71.2%; top: 86.5%; height: 6.8%; }
+
+/* ---------- Cómo llegar: lucecita que parpadea en el círculo de llegada ---------- */
+.arrival-light {
+  position: absolute;
+  z-index: 2;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  background: radial-gradient(circle, #fff 0 14%, rgba(255, 255, 255, .75) 26%, rgba(214, 235, 250, .4) 46%, rgba(196, 224, 245, 0) 72%);
+  animation: arrival-blink 1.8s ease-in-out infinite;
+}
+/* onda suave que sale del círculo */
+.arrival-light::after {
+  content: "";
+  position: absolute;
+  inset: 18%;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, .95);
+  box-shadow: 0 0 6px rgba(196, 224, 245, .9);
+  animation: arrival-ring 1.8s ease-out infinite;
+}
+.arrival-light--panel { left: 89%; top: 40.49%; width: 3.4%; }      /* círculo en 911,622 de 1024×1536 */
+.arrival-light--modal { left: 10.07%; top: 53.19%; width: 4.2%; }   /* círculo en 85,601 de 844×1130 */
+@keyframes arrival-blink {
+  0%, 100% { opacity: .25; transform: translate(-50%, -50%) scale(.7); }
+  45%      { opacity: 1;   transform: translate(-50%, -50%) scale(1.1); }
+}
+@keyframes arrival-ring {
+  0%   { opacity: .9; transform: scale(.6); }
+  100% { opacity: 0;  transform: scale(3); }
+}
+
+/* ---------- Invitados (texto sobre el marco en blanco) ---------- */
+.guests__content {
+  position: absolute;
+  left: 13%;
+  right: 13%;
+  top: 15%;
+  bottom: 18%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.15;
+}
+.guests__eyebrow {
+  margin: 0 0 4cqi;
+  font-weight: 500;
+  font-size: 3.3cqi;
+  letter-spacing: .32em;
+  color: var(--ink-soft);
+}
+.guests__title {
+  margin: 0;
+  font-family: "Pinyon Script", cursive;
+  font-size: 8.6cqi;
+  line-height: 1.2;
+  white-space: nowrap;
+  color: var(--ink);
+}
+.guests__names {
+  margin: 5cqi 0 1cqi;
+  min-height: 1em;
+  font-weight: 500;
+  font-size: 7.4cqi;
+  line-height: 1.2;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink);
+  text-wrap: balance;
+}
+.guests__places {
+  margin: 0;
+  min-height: 1.2em;
+  font-weight: 500;
+  font-style: italic;
+  font-size: 5.6cqi;
+  color: var(--ink-soft);
+  font-variant-numeric: lining-nums;
+}
+
+/* Separador: línea – rombo plateado – línea */
+.divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 62%;
+  margin: 3.5cqi auto;
+}
+.divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: linear-gradient(to right, transparent, var(--silver)); }
+.divider::after { background: linear-gradient(to left, transparent, var(--silver)); }
+.divider span {
+  width: 7px; height: 7px;
+  transform: rotate(45deg);
+  background: linear-gradient(135deg, #f4f6f8, #9aa4ae);
+  box-shadow: 0 0 0 1px rgba(154, 164, 174, .4);
+}
+
+/* ---------- Cuenta regresiva: sobre los huecos de la imagen ---------- */
+.countdown {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.countdown strong {
+  position: absolute;
+  top: 55.3%;
+  height: 5.6%;
+  width: 18%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 400;
+  font-size: 10cqi;
+  line-height: 1;
+  color: var(--ink-soft);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.countdown [data-unit="days"]    { left: 22.3%; }
+.countdown [data-unit="hours"]   { left: 41.2%; }
+.countdown [data-unit="minutes"] { left: 60.4%; }
+.countdown [data-unit="seconds"] { left: 79.5%; }
+
+/* ---------- Fecha: raspadita (tapa toda la pantalla) ---------- */
+/* Hasta descubrir la fecha no se puede seguir: lo que viene después no existe todavía
+   (scratch.js saca .date-locked del body al revelar). */
+body.date-locked .panel--date ~ .panel,
+body.date-locked .footer { display: none; }
+.scratch {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  container-type: inline-size;
+  /* raspar de lado a lado; deslizar hacia arriba/abajo sigue moviendo la página */
+  touch-action: pan-y;
+  cursor: grab;
+  transition: opacity .9s ease, visibility 0s linear .9s;
+}
+.scratch:active { cursor: grabbing; }
+.scratch__canvas { display: block; width: 100%; height: 100%; }
+.scratch.is-revealed { opacity: 0; visibility: hidden; }
+/* dedito que muestra cómo raspar, hasta que empiezan */
+.scratch__hint {
+  position: absolute;
+  left: 36%;
+  top: 64%;
+  width: 11cqi;
+  height: 11cqi;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff, #c9d6e2 60%, #9fb1c2);
+  box-shadow: 0 3px 10px rgba(44, 85, 116, .35);
+  pointer-events: none;
+  animation: scratch-hint 2.2s ease-in-out infinite;
+}
+.scratch.is-scratching .scratch__hint { display: none; }
+@keyframes scratch-hint {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(20cqi, -3cqi); }
+  50% { transform: translate(0, -6cqi); }
+  75% { transform: translate(20cqi, -9cqi); }
+}
+
+/* ---------- Música: vinilo entero girando ----------
+   09-musica.jpg mide 941x1672 (más alta que las demás, 2:3), así que esta sección usa su propia proporción.
+   vinilo.webp es el disco completo (reconstruido a partir de la imagen): centro 552,1053 · radio 373.
+   vinilo-brazo.webp es el brazo con la púa, sus sombras y el eje, fijos por encima del disco (_tool/gen3.html). */
+.panel--music { height: calc(var(--col) * 1672 / 941); }
+.panel--music .panel__stage { aspect-ratio: 941 / 1672; }
+.vinyl {
+  position: absolute;
+  left: 19.022%;   /* (552 - 373) / 941 */
+  top: 40.670%;    /* (1053 - 373) / 1672 */
+  width: 79.277%;  /* 746 / 941 */
+  aspect-ratio: 1;
+  pointer-events: none;
+  opacity: 0;                 /* aparece cuando cargaron disco y brazo (script.js) */
+  transition: opacity .4s;
+}
+.vinyl.is-ready { opacity: 1; }
+.vinyl__disc {
+  display: block;
+  width: 100%;
+  height: 100%;
+  animation: vinyl-spin 6s linear infinite;
+  will-change: transform;
+}
+@keyframes vinyl-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.vinyl-arm {
+  position: absolute;
+  left: 18.066%;   /* 170 / 941 */
+  top: 40.132%;    /* 671 / 1672 */
+  width: 81.297%;  /* 765 / 941 */
+  height: auto;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vinyl__disc { animation-duration: 14s; }
+  .arrival-light, .arrival-light::after { animation-duration: 3.6s; }
+  .scratch__hint { animation: none; }
+}
+
+/* ---------- Modales ---------- */
+dialog::backdrop { background: rgba(70, 98, 124, .55); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+dialog[open] { animation: modal-in .35s ease-out; }
+@keyframes modal-in { from { opacity: 0; transform: translateY(14px) scale(.97); } }
+
+.toast {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  font: 500 14px/1.2 "Cormorant Garamond", serif;
+  letter-spacing: .06em;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity .25s;
+  pointer-events: none;
+}
+.toast.is-visible { opacity: 1; }
+
+/* Cómo llegar: la tarjeta es una imagen; los botones son zonas invisibles */
+.location-modal {
+  width: min(88vw, 400px);
+  padding: 0;
+  border: 0;
+  border-radius: 22px;
+  overflow: hidden;
+  background: var(--paper);
+  box-shadow: 0 24px 60px rgba(30, 55, 80, .35);
+  line-height: 0;
+}
+.location-modal img { display: block; width: 100%; height: auto; }
+.location-modal__hit {
+  position: absolute;
+  display: block;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: rgba(44, 85, 116, .18);
+}
+.location-modal__hit:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.location-modal__hit--close { left: 82%;  width: 14%; top: 2.5%;  height: 7.5%; border-radius: 50%; }
+.location-modal__hit--maps  { left: 16.5%; width: 68.5%; top: 54.2%; height: 7.6%; }
+.location-modal__hit--waze  { left: 16.5%; width: 68.5%; top: 63.8%; height: 7.6%; }
+.location-modal__hit--copy  { left: 16.5%; width: 68.5%; top: 73.4%; height: 7.6%; }
+
+/* Regalos */
+.gift-modal {
+  width: min(88vw, 380px);
+  padding: 40px 26px 34px;
+  border: 1px solid rgba(169, 179, 189, .6);
+  border-radius: 18px;
+  background:
+    radial-gradient(120% 60% at 50% 0%, rgba(207, 224, 238, .55), transparent 65%),
+    var(--paper);
+  color: var(--ink);
+  text-align: center;
+  box-shadow: 0 24px 60px rgba(30, 55, 80, .35);
+  line-height: 1.3;
+}
+.gift-modal__close {
+  position: absolute; top: 8px; right: 12px;
+  width: 40px; height: 40px;
+  border: 0; background: none; color: var(--ink);
+  font-size: 32px; line-height: 1; cursor: pointer;
+}
+.gift-modal__close:focus:not(:focus-visible) { outline: none; }
+.gift-modal__title {
+  margin: 0;
+  font-family: "Pinyon Script", cursive;
+  font-weight: 400;
+  font-size: 52px;
+  line-height: 1.1;
+}
+.gift-modal .divider { margin: 12px auto 16px; }
+.gift-modal__text { margin: 0 0 18px; font-size: 18px; font-weight: 500; color: var(--ink-soft); }
+.gift-modal__data { margin: 0 0 22px; }
+.gift-modal__data dt {
+  font-size: 12px; font-weight: 600; letter-spacing: .3em; color: var(--ink-soft);
+}
+.gift-modal__data dd {
+  margin: 4px 0 14px;
+  font-size: 21px; font-weight: 600; letter-spacing: .04em;
+  overflow-wrap: anywhere;
+}
+.gift-modal__alias {
+  padding: 10px 8px;
+  border: 1px dashed var(--silver);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .6);
+  user-select: all;
+}
+.gift-modal__btn {
+  display: block;
+  width: 100%;
+  min-height: 50px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--ink);
+  color: #fff;
+  font: 600 17px/1 "Cormorant Garamond", serif;
+  letter-spacing: .18em;
+  cursor: pointer;
+}
+.gift-modal__btn:active { background: #234863; }
+.gift-modal__thanks { margin: 16px 0 0; font-family: "Pinyon Script", cursive; font-size: 30px; }
+
+/* Footer: íconos de la imagen (2172×724) */
+.footer__link { top: 63.5%; height: 14%; width: 5%; border-radius: 50%; }
+.footer__link--wa  { left: 39.6%; }
+.footer__link--ig  { left: 47.5%; }
+.footer__link--web { left: 55.5%; }
